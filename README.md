@@ -1,5 +1,4 @@
 # Internal Monologue Attack: Retrieving NTLM Hashes without Mimikatz
-*By Elad Shamir, The Missing Link Security*
 
 ## Introduction
 Mimikatz, developed by Benjamin Delpy (@gentilkiwi), is a well-regarded post-exploitation tool, which allows adversaries to extract plain text passwords, NTLM hashes and Kerberos tickets from memory, as well as perform attacks such as pass-the-hash, pass-the-ticket or build a golden ticket. Arguably, the primary use of Mimikatz is retrieving user credentials from LSASS process memory for use in post exploitation lateral movement.
@@ -33,7 +32,7 @@ NTLMMinClientSec - if configured to “Require NTLMv2 session security”, the c
 RestrictSendingNTLMTraffic - if configured to "Deny all," the client computer cannot authenticate to a remote server with NetNTLM of any version.
 Similarly to the NetNTLM Downgrade attack, these settings can be changed if necessary. Note that unlike LMCompatibilityLevel, these settings are not configured by default to block NetNTLMv1 authentication.
 
-Internal Monologue Attack
+## Internal Monologue Attack
 In secure environments, where Mimikatz should not be executed due to controls such as Credential Guard, an adversary can perform an Internal Monologue Attack, in which they invoke a local procedure call to the NTLM authentication package (MSV1_0) from a user-mode application through SSPI to calculate a NetNTLM response in the context of the logged on user, after performing an extended NetNTLM downgrade.
 
 The Internal Monologue Attack flow is described below:

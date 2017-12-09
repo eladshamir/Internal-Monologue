@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.27004.2009
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InternalMonologue", "InternalMonologue\InternalMonologue.csproj", "{0C0333DB-8F00-4B68-B1DB-18A9CACC1486}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0C0333DB-8F00-4B68-B1DB-18A9CACC1486}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0C0333DB-8F00-4B68-B1DB-18A9CACC1486}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0C0333DB-8F00-4B68-B1DB-18A9CACC1486}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0C0333DB-8F00-4B68-B1DB-18A9CACC1486}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {54B2C995-B775-4961-BAF0-D2BD4CF07B91}
+	EndGlobalSection
+EndGlobal

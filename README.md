@@ -28,8 +28,8 @@ Mimikatz is commonly executed after the adversary has gained elevated access to 
 
 ## Extended NetNTLM Downgrade Attack
 Two more settings may stop the victim from negotiating a NetNTLMv1 response:
-NTLMMinClientSec - if configured to “Require NTLMv2 session security”, the connection will fail if NTLMv2 protocol is not negotiated.
-RestrictSendingNTLMTraffic - if configured to "Deny all," the client computer cannot authenticate to a remote server with NetNTLM of any version.
+1. NTLMMinClientSec - if configured to "Require NTLMv2 session security", the connection will fail if NTLMv2 protocol is not negotiated.
+2. RestrictSendingNTLMTraffic - if configured to "Deny all," the client computer cannot authenticate to a remote server with NetNTLM of any version.
 Similarly to the NetNTLM Downgrade attack, these settings can be changed if necessary. Note that unlike LMCompatibilityLevel, these settings are not configured by default to block NetNTLMv1 authentication.
 
 ## Internal Monologue Attack
@@ -53,7 +53,7 @@ Please let me know if I am missing something and it is louder than I think.
 This tool is a proof of concept that implements the Internal Monologue Attack in C#. Porting the code to PowerShell may substitute certain event logs in the audit trail with others.
 The PoC code is far from perfect. Positive contributions and improvements are welcome.
 
-## Authors
+## Author
 Elad Shamir from The Missing Link Security
 
 ## Acknowledgements

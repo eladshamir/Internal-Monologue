@@ -402,20 +402,20 @@ namespace InternalMonologue
             PrintMenu();
         }
 
-        //TODO
         private static void PrintMenu()
         {
             Console.WriteLine();
             Console.WriteLine("Usage:");
-            Console.WriteLine("InternalMonolouge -Downgrade True/Flase -Restore True/Flase - Impersonate True/Flase -Verbose True/False -Challenge ascii-hex");
+            Console.WriteLine("InternalMonolouge -Downgrade True/False -Restore True/False - Impersonate True/False -Verbose True/False -Challenge ascii-hex");
             Console.WriteLine("Example:");
-            Console.WriteLine("InternalMonolouge -Downgrade Flase -Restore Flase - Impersonate True -Verbose False -Challenge 1122334455667788");
+            Console.WriteLine("InternalMonolouge -Downgrade False -Restore False - Impersonate True -Verbose False -Challenge 1122334455667788");
             Console.WriteLine();
             Console.WriteLine("Downgrade - Specifies whether to perform an NTLM downgrade or not [True/False]. Optional. Defult is true.");
             Console.WriteLine("Restore - Specifies whether to restore the original values from before the NTLM downgrade or not [True/False]. Optional. Defult is true.");
             Console.WriteLine("Impersonate - Specifies whether to try to impersonate all other available users or not [True/False]. Optional. Defult is true.");
             Console.WriteLine("Verbose - Specifies whether print verbose output or not [True/False]. Optional. Defult is false.");
             Console.WriteLine("Challenge - Specifies the NTLM challenge to be used. An 8-byte long value in ascii-hex representation. Optional. Defult is 1122334455667788.");
+            Console.WriteLine("If you use the default challenge (1122334455667788) with a downgrade, submit to crack.sh with NTHASH: prefix instead of the challenge (https://crack.sh/get-cracking/)");
         }
 
         public static void Main(string[] args)

@@ -4,3 +4,4 @@ D:\Users\shamir\Desktop\Internal-Monologue\InternalMonologue\bin\Release\Interna
 D:\Users\shamir\Desktop\Internal-Monologue\InternalMonologue\obj\Release\InternalMonologue.csproj.CoreCompileInputs.cache
 D:\Users\shamir\Desktop\Internal-Monologue\InternalMonologue\obj\Release\InternalMonologue.exe
 D:\Users\shamir\Desktop\Internal-Monologue\InternalMonologue\obj\Release\InternalMonologue.pdb
+D:\Users\shamir\Desktop\Internal-Monologue\InternalMonologue\obj\Release\InternalMonologue.csprojResolveAssemblyReference.cache

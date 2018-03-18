@@ -1,4 +1,4 @@
-function Invoke-InternalMonolouge
+function Invoke-InternalMonologue
 {
 <#
 .SYNOPSIS
@@ -10,13 +10,14 @@ Downgrades to NTLMv1, impersonates all available users and retrieves a challenge
 Author: Elad Shamir (https://linkedin.com/in/eladshamir)
 
 .EXAMPLE
-Invoke-InternalMonolouge
+Invoke-InternalMonologue
 
 .LINK
 https://github.com/eladshamir/Internal-Monologue
 
 #>
 
+$Source = @"
 using System;
 using System.Security.Principal;
 using System.Runtime.InteropServices;
@@ -378,9 +379,9 @@ namespace InternalMonologue
         {
             Console.WriteLine();
             Console.WriteLine("Usage:");
-            Console.WriteLine("InternalMonolouge -Downgrade True/False -Restore True/False - Impersonate True/False -Verbose True/False -Challenge ascii-hex");
+            Console.WriteLine("InternalMonologue -Downgrade True/False -Restore True/False - Impersonate True/False -Verbose True/False -Challenge ascii-hex");
             Console.WriteLine("Example:");
-            Console.WriteLine("InternalMonolouge -Downgrade False -Restore False - Impersonate True -Verbose False -Challenge 1122334455667788");
+            Console.WriteLine("InternalMonologue -Downgrade False -Restore False -Impersonate True -Verbose False -Challenge 1122334455667788");
             Console.WriteLine();
             Console.WriteLine("Downgrade - Specifies whether to perform an NTLM downgrade or not [True/False]. Optional. Defult is true.");
             Console.WriteLine("Restore - Specifies whether to restore the original values from before the NTLM downgrade or not [True/False]. Optional. Defult is true.");
@@ -779,6 +780,7 @@ namespace InternalMonologue
         SecurityDelegation
     }
 }
+
 
 "@
 

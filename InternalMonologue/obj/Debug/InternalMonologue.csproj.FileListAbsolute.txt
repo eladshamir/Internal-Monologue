@@ -1,7 +1,0 @@
-D:\Users\shamir\Desktop\Internal-Monologue\InternalMonologue\bin\Debug\InternalMonologue.exe.config
-D:\Users\shamir\Desktop\Internal-Monologue\InternalMonologue\bin\Debug\InternalMonologue.exe
-D:\Users\shamir\Desktop\Internal-Monologue\InternalMonologue\bin\Debug\InternalMonologue.pdb
-D:\Users\shamir\Desktop\Internal-Monologue\InternalMonologue\obj\Debug\InternalMonologue.csprojResolveAssemblyReference.cache
-D:\Users\shamir\Desktop\Internal-Monologue\InternalMonologue\obj\Debug\InternalMonologue.csproj.CoreCompileInputs.cache
-D:\Users\shamir\Desktop\Internal-Monologue\InternalMonologue\obj\Debug\InternalMonologue.exe
-D:\Users\shamir\Desktop\Internal-Monologue\InternalMonologue\obj\Debug\InternalMonologue.pdb

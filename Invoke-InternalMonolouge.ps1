@@ -403,7 +403,7 @@ namespace InternalMonologue
         static List<string> authenticatedUsers = new List<string>();
 
         //Parse command line arguments
-        static Dictionary<string, string> parseArgs(string[] args)
+        static Dictionary<string, string> ParseArgs(string[] args)
         {
             Dictionary<string, string> ret = new Dictionary<string, string>();
             if (args.Length % 2 == 0 && args.Length > 0)
@@ -418,29 +418,31 @@ namespace InternalMonologue
 
         private static void PrintError(string message)
         {
-            Console.WriteLine(message);
+            Console.WriteLine();
+            Console.WriteLine("Error: " + message);
             PrintMenu();
         }
 
-        //TODO
         private static void PrintMenu()
         {
             Console.WriteLine();
             Console.WriteLine("Usage:");
-            Console.WriteLine("InternalMonolouge -Downgrade True/Flase -Restore True/Flase - Impersonate True/Flase -Verbose True/False -Challenge ascii-hex");
+            Console.WriteLine("InternalMonolouge -Downgrade True/False -Restore True/False - Impersonate True/False -Verbose True/False -Challenge ascii-hex");
             Console.WriteLine("Example:");
-            Console.WriteLine("InternalMonolouge -Downgrade Flase -Restore Flase - Impersonate True -Verbose False -Challenge 1122334455667788");
+            Console.WriteLine("InternalMonolouge -Downgrade False -Restore False - Impersonate True -Verbose False -Challenge 1122334455667788");
             Console.WriteLine();
             Console.WriteLine("Downgrade - Specifies whether to perform an NTLM downgrade or not [True/False]. Optional. Defult is true.");
             Console.WriteLine("Restore - Specifies whether to restore the original values from before the NTLM downgrade or not [True/False]. Optional. Defult is true.");
             Console.WriteLine("Impersonate - Specifies whether to try to impersonate all other available users or not [True/False]. Optional. Defult is true.");
             Console.WriteLine("Verbose - Specifies whether print verbose output or not [True/False]. Optional. Defult is false.");
             Console.WriteLine("Challenge - Specifies the NTLM challenge to be used. An 8-byte long value in ascii-hex representation. Optional. Defult is 1122334455667788.");
+            Console.WriteLine("If you use the default challenge (1122334455667788) with a downgrade, submit to crack.sh with NTHASH: prefix instead of the challenge (https://crack.sh/get-cracking/)");
+            Console.WriteLine();
         }
 
         public static void Main(string[] args)
         {
-            Dictionary<string, string> argDict = parseArgs(args);
+            Dictionary<string, string> argDict = ParseArgs(args);
             //Set defaults
             bool impersonate = true, downgrade = true, restore = true, verbose = false;
             string challenge = "1122334455667788";

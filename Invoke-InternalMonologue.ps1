@@ -837,6 +837,6 @@ $inmem.ReferencedAssemblies.AddRange($(@("System.dll", $([PSObject].Assembly.Loc
 
 Add-Type -TypeDefinition $Source -Language CSharp -CompilerParameters $inmem 
 
-[InternalMonologue.Program]::Main()
+[InternalMonologue.Program]::Main($args)
 
 }

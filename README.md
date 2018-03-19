@@ -47,7 +47,7 @@ The Internal Monologue Attack flow is described below:
 The Internal Monologue Attack is arguably stealthier than running Mimikatz because there is no need to inject code or dump memory to/from a protected process.
 Because the NetNTLMv1 response is elicited by interacting with NTLM SSP locally, no network traffic is generated, and the chosen challenge is not easily visible.
 No successful NTLM authentication event is recorded in the logs.
-Please let me know if I am missing something and it is louder than I think.
+The registry changes for the downgrade to NetNTLMv1 and stealing tokens/impersonating other users may trip indicators.
 
 ## Proof of Concept
 This tool is a proof of concept that implements the Internal Monologue Attack in C#. Porting the code to PowerShell may substitute certain event logs in the audit trail with others.

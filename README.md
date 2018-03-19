@@ -1,4 +1,4 @@
-# Internal Monologue Attack: Retrieving NTLM Hashes without Mimikatz
+# Internal Monologue Attack: Retrieving NTLM Hashes without Touching LSASS
 
 ## Introduction
 Mimikatz, developed by Benjamin Delpy (@gentilkiwi), is a well-regarded post-exploitation tool, which allows adversaries to extract plain text passwords, NTLM hashes and Kerberos tickets from memory, as well as perform attacks such as pass-the-hash, pass-the-ticket or build a golden ticket. Arguably, the primary use of Mimikatz is retrieving user credentials from LSASS process memory for use in post exploitation lateral movement.

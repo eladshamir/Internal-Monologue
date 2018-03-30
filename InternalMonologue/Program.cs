@@ -193,7 +193,7 @@ namespace InternalMonologue
 
                 return SID;
             }
-            catch (Exception e)
+            catch 
             {
                 CloseHandle(token);
                 return null;
@@ -247,7 +247,7 @@ namespace InternalMonologue
                                     else if (verbose == true) { Console.WriteLine("Got blank response for user " + WindowsIdentity.GetCurrent().Name); }
                                 }
                             }
-                            catch (Exception e)
+                            catch
                             { /*Does not need to do anything if it fails*/ }
                             finally
                             {
@@ -317,7 +317,7 @@ namespace InternalMonologue
                                     else if (verbose == true) { Console.WriteLine("Got blank response for user " + WindowsIdentity.GetCurrent().Name); }
                                 }
                             }
-                            catch (Exception e)
+                            catch 
                             { /*Does not need to do anything if it fails*/ }
                             finally
                             {

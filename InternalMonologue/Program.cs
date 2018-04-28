@@ -556,14 +556,14 @@ namespace InternalMonologue
         //This function parses the NetNTLM response from a type-3 message
         private static string ParseNTResponse(byte[] message, string challenge)
         {
-            short lm_resp_len = Convert.ToInt16(message[12] + message[13] * 256);
-            short lm_resp_off = Convert.ToInt16(message[16] + message[17] * 256);
-            short nt_resp_len = Convert.ToInt16(message[20] + message[21] * 256);
-            short nt_resp_off = Convert.ToInt16(message[24] + message[25] * 256);
-            short domain_len = Convert.ToInt16(message[28] + message[29] * 256);
-            short domain_off = Convert.ToInt16(message[32] + message[33] * 256);
-            short user_len = Convert.ToInt16(message[36] + message[37] * 256);
-            short user_off = Convert.ToInt16(message[40] + message[41] * 256);
+            ushort lm_resp_len = BitConverter.ToUInt16(message, 12);
+            uint lm_resp_off = BitConverter.ToUInt32(message, 16);
+            ushort nt_resp_len = BitConverter.ToUInt16(message, 20);
+            uint nt_resp_off = BitConverter.ToUInt32(message, 24);
+            ushort domain_len = BitConverter.ToUInt16(message, 28);
+            uint domain_off = BitConverter.ToUInt32(message, 32);
+            ushort user_len = BitConverter.ToUInt16(message, 36);
+            uint user_off = BitConverter.ToUInt32(message, 40);
             byte[] lm_resp = new byte[lm_resp_len];
             byte[] nt_resp = new byte[nt_resp_len];
             byte[] domain = new byte[domain_len];

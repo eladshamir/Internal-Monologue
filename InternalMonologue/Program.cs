@@ -388,8 +388,6 @@ namespace InternalMonologue
             //Set defaults
             bool impersonate = true, downgrade = true, restore = true, verbose = false;
             string challenge = "1122334455667788";
-            //add system SIDs to skip list:
-            authenticatedUsers.Add("S-1-5-18");
 
             if (args.Length > 0 && argDict.Count == 0)
             {

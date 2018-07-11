@@ -444,6 +444,9 @@ namespace InternalMonologue
                 console.AddResponse(response);
                 console.AddConsole(string.Format("{0}\n", response.ToString()));
             }
+#if DEBUG
+            Console.WriteLine(console.Output());
+#endif
             return console;
         }
 
@@ -539,24 +542,23 @@ namespace InternalMonologue
             Array.Copy(message, user_off, user, 0, user_len);
 
             var result = new InternalMonologueResponse();
+            result.NtlmDowngrade = downgrade;
+            result.FromElevated = isElevated;
+            result.Challenge = challenge;
+            result.ImpersonatedIdentity = WindowsIdentity.GetCurrent().Name;
+            result.SID = WindowsIdentity.GetCurrent().User.ToString();
             if (nt_resp_len == 24)
             {
-                result.NtlmDowngrade = downgrade;
-                result.FromElevated = isElevated;
                 result.UserName = ConvertHex(ByteArrayToString(user));
                 result.Domain = ConvertHex(ByteArrayToString(domain));
                 result.Resp1 = ByteArrayToString(lm_resp);
                 result.Resp2 = ByteArrayToString(nt_resp);
-                result.Challenge = challenge;
 //                result = ConvertHex(ByteArrayToString(user)) + "::" + ConvertHex(ByteArrayToString(domain)) + ":" + ByteArrayToString(lm_resp) + ":" + ByteArrayToString(nt_resp) + ":" + challenge;
             }
             else if (nt_resp_len > 24)
             {
-                result.NtlmDowngrade = downgrade;
-                result.FromElevated = isElevated;
                 result.UserName = ConvertHex(ByteArrayToString(user));
                 result.Domain = ConvertHex(ByteArrayToString(domain));
-                result.Challenge = challenge;
                 result.Resp1 = ByteArrayToString(nt_resp).Substring(0, 32);
                 result.Resp2 = ByteArrayToString(nt_resp).Substring(32);
                 //result = ConvertHex(ByteArrayToString(user)) + "::" + ConvertHex(ByteArrayToString(domain)) + ":" + challenge + ":" + ByteArrayToString(nt_resp).Substring(0, 32) + ":" + ByteArrayToString(nt_resp).Substring(32);

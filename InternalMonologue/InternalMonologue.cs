@@ -216,7 +216,7 @@ namespace InternalMonologue
 
         public bool ValidateSID(string SID, bool verbose)
         {
-            if (string.IsNullOrWhiteSpace(SID))
+            if (SID.IsNullOrWhiteSpace())
             {
                 return false;
             }
@@ -276,7 +276,7 @@ namespace InternalMonologue
                                 if (verbose == true) console.AddConsole(string.Format("Impersonated user {0}\n", WindowsIdentity.GetCurrent().Name));
                                 var result = InternalMonologueForCurrentUser(challenge);
                                 //Ensure it is a valid response and not blank
-                                if (!string.IsNullOrWhiteSpace(result.Resp1))
+                                if (!result.Resp1.IsNullOrWhiteSpace())
                                 {
                                     console.AddResponse(result);
                                     console.AddConsole(string.Format("{0}\n", result.ToString()));
@@ -349,7 +349,7 @@ namespace InternalMonologue
                                 if (verbose == true) console.AddConsole(string.Format("Impersonated user {0}\n", WindowsIdentity.GetCurrent().Name));
                                 var result = InternalMonologueForCurrentUser(challenge);
                                 //Ensure it is a valid response and not blank
-                                if (!string.IsNullOrWhiteSpace(result.Resp1))
+                                if (!result.Resp1.IsNullOrWhiteSpace())
                                 {
                                     console.AddResponse(result); //rich data object for consumer classes
                                     console.AddConsole(string.Format("{0}\n", result));

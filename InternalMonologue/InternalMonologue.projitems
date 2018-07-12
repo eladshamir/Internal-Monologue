@@ -12,5 +12,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)InternalMonologue.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)InternalMonologueConsole.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)InternalMonologueResponse.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)StringExtensions.cs" />
   </ItemGroup>
 </Project>

@@ -10,7 +10,7 @@ namespace InternalMonologue
         public List<InternalMonologueResponse> Responses = new List<InternalMonologueResponse>();
         public void AddResponse(InternalMonologueResponse response)
         {
-            if (string.IsNullOrWhiteSpace(response.Resp1))
+            if (response.Resp1.IsNullOrWhiteSpace())
             {
                 return;
             }
@@ -25,7 +25,7 @@ namespace InternalMonologue
         }
         public void AddConsole(string s)
         {
-            if (string.IsNullOrWhiteSpace(s))
+            if (s.IsNullOrWhiteSpace())
             {
                 return;
             }

@@ -1,7 +1,0 @@
-C:\Users\elad\Desktop\Internal-Monologue\InternalMonologueExe\bin\Release\InternalMonologue.exe.config
-C:\Users\elad\Desktop\Internal-Monologue\InternalMonologueExe\bin\Release\InternalMonologue.exe
-C:\Users\elad\Desktop\Internal-Monologue\InternalMonologueExe\bin\Release\InternalMonologue.pdb
-C:\Users\elad\Desktop\Internal-Monologue\InternalMonologueExe\obj\Release\InternalMonologueExe.csprojResolveAssemblyReference.cache
-C:\Users\elad\Desktop\Internal-Monologue\InternalMonologueExe\obj\Release\InternalMonologueExe.csproj.CoreCompileInputs.cache
-C:\Users\elad\Desktop\Internal-Monologue\InternalMonologueExe\obj\Release\InternalMonologue.exe
-C:\Users\elad\Desktop\Internal-Monologue\InternalMonologueExe\obj\Release\InternalMonologue.pdb

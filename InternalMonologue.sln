@@ -3,9 +3,15 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27004.2009
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InternalMonologue", "InternalMonologue\InternalMonologue.csproj", "{0C0333DB-8F00-4B68-B1DB-18A9CACC1486}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InternalMonologueExe", "InternalMonologueExe\InternalMonologueExe.csproj", "{0C0333DB-8F00-4B68-B1DB-18A9CACC1486}"
+EndProject
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "InternalMonologue", "InternalMonologue\InternalMonologue.shproj", "{1E4CF34F-887B-4D47-8EC8-AD1EC6FEDA88}"
 EndProject
 Global
+	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		InternalMonologue\InternalMonologue.projitems*{0c0333db-8f00-4b68-b1db-18a9cacc1486}*SharedItemsImports = 4
+		InternalMonologue\InternalMonologue.projitems*{1e4cf34f-887b-4d47-8ec8-ad1ec6feda88}*SharedItemsImports = 13
+	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU

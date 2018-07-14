@@ -114,8 +114,8 @@ namespace InternalMonologue
             if (verbose) Console.WriteLine("Checking threads for user tokens enabled: {0}", threads);
 
             var monologue = new InternalMonologue(impersonate, threads, downgrade, restore, challenge, verbose);
-            var output = monologue.Go();
-            Console.WriteLine(output);            
+            var monologueConsole = monologue.Go();
+            Console.WriteLine(monologueConsole.Output());
         }
     }
 }

@@ -4,7 +4,7 @@
 Mimikatz, developed by Benjamin Delpy (@gentilkiwi), is a well-regarded post-exploitation tool, which allows adversaries to extract plain text passwords, NTLM hashes and Kerberos tickets from memory, as well as perform attacks such as pass-the-hash, pass-the-ticket or build a golden ticket. Arguably, the primary use of Mimikatz is retrieving user credentials from LSASS process memory for use in post exploitation lateral movement.
 
 Recently, Microsoft has introduced Credential Guard in Windows 10 Enterprise and Windows Server 2016, which uses virtualization-based security to isolate secrets, and it is very effective in preventing Mimikatz from retrieving hashes directly from memory.
-Also, Mimikatz has become a prime target of most endpoint protection solutions, from Windows Defender to FireEye HX, and they are very aggressive in their efforts to detect and prevent it. Although these efforts are bound to fail, they are increasingly becoming a nuisance.
+Also, Mimikatz has become a prime target of most endpoint protection solutions, and they are very aggressive in their efforts to detect and prevent it. Although these efforts are bound to fail, they are increasingly becoming a nuisance.
 
 ## NetNTLM
 NetNTLM is Windows’ challenge-response protocol that is mainly used where Kerberos is not supported. In NetNTLM, the server sends to the client a random 8-byte nonce as a challenge, and the client calculates a response that processes the challenge with the NTLM hash as the key, which is the MD4 hash of the user’s password. There are two versions of the NetNTLM authentication protocol, and both are vulnerable to certain attacks. Naturally, version 1 is significantly weaker than version 2, and therefore as of Windows Vista/2008 NetNTLM version 1 is disabled by default.
@@ -33,7 +33,7 @@ Two more settings may stop the victim from negotiating a NetNTLMv1 response:
 Similarly to the NetNTLM Downgrade attack, these settings can be changed if necessary. Note that unlike LMCompatibilityLevel, these settings are not configured by default to block NetNTLMv1 authentication.
 
 ## Internal Monologue Attack
-In secure environments, where Mimikatz should not be executed due to controls such as Credential Guard, an adversary can perform an Internal Monologue Attack, in which they invoke a local procedure call to the NTLM authentication package (MSV1_0) from a user-mode application through SSPI to calculate a NetNTLM response in the context of the logged on user, after performing an extended NetNTLM downgrade.
+In secure environments, where Mimikatz should not be executed, an adversary can perform an Internal Monologue Attack, in which they invoke a local procedure call to the NTLM authentication package (MSV1_0) from a user-mode application through SSPI to calculate a NetNTLM response in the context of the logged on user, after performing an extended NetNTLM downgrade.
 
 The Internal Monologue Attack flow is described below:
 1. Disable NetNTLMv1 preventive controls by changing LMCompatibilityLevel, NTLMMinClientSec and RestrictSendingNTLMTraffic to appropriate values, as described above.
@@ -42,6 +42,10 @@ The Internal Monologue Attack flow is described below:
 4. Restore the original values of LMCompatibilityLevel, NTLMMinClientSec and RestrictSendingNTLMTraffic.
 5. Crack the NTLM hash of the captured responses using rainbow tables.
 6. Pass the Hash.
+
+## Update: Credential Guard Compatibility
+I have recently retested Internal Monologue in environments with Credential Guard enabled and got negative results. I am not sure whether Credential Guard was not working properly in my test environment during the initial tests, or perhaps something changed since then.
+I updated the implementation to acquire a server token from AcceptSecurityContext dynamically and tamper with it to avoid the local authentication trap, so that if NetNTLMv1 without Extended Session Security fails, at least a NetNTLMv2 challenge-response can be captured.
 
 ## Audit Trail
 The Internal Monologue Attack is arguably stealthier than running Mimikatz because there is no need to inject code or dump memory to/from a protected process.
@@ -61,4 +65,7 @@ Elad Shamir from The Missing Link Security
 * Moxie Marlinspike and David Hulton for their talk “Defeating PPTP VPNs and WPA2 Enterprise with MS-CHAPv2” at Defcon 20
 * Optiv for the NetNTLM Downgrade Attack
 * Bialek Joseph (clymb3r) for Invoke-TokenManupilation 
-* Microsoft for coming up with great ideas and never disappointing
+* MWR Labs for Incognito
+* Anton Sapozhnikov (snowytoxa) for Selfhash
+* Tim Malcom Vetter (malcomvetter) for multiple improvements
+* Marcello Salvati (byt3bl33d3r) for the DLL library addition

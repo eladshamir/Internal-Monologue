@@ -7,10 +7,13 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InternalMonologueExe", "Int
 EndProject
 Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "InternalMonologue", "InternalMonologue\InternalMonologue.shproj", "{1E4CF34F-887B-4D47-8EC8-AD1EC6FEDA88}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InternalMonologueDll", "InternalMonologueDll\InternalMonologueDll.csproj", "{84701ACE-C584-4886-A3CF-76C57F6E801A}"
+EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		InternalMonologue\InternalMonologue.projitems*{0c0333db-8f00-4b68-b1db-18a9cacc1486}*SharedItemsImports = 4
 		InternalMonologue\InternalMonologue.projitems*{1e4cf34f-887b-4d47-8ec8-ad1ec6feda88}*SharedItemsImports = 13
+		InternalMonologue\InternalMonologue.projitems*{84701ace-c584-4886-a3cf-76c57f6e801a}*SharedItemsImports = 4
 	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +24,10 @@ Global
 		{0C0333DB-8F00-4B68-B1DB-18A9CACC1486}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0C0333DB-8F00-4B68-B1DB-18A9CACC1486}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0C0333DB-8F00-4B68-B1DB-18A9CACC1486}.Release|Any CPU.Build.0 = Release|Any CPU
+		{84701ACE-C584-4886-A3CF-76C57F6E801A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{84701ACE-C584-4886-A3CF-76C57F6E801A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{84701ACE-C584-4886-A3CF-76C57F6E801A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{84701ACE-C584-4886-A3CF-76C57F6E801A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
